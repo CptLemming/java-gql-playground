@@ -10,8 +10,14 @@ type Product {
   description: String
   cost: Float
   tax: Float
+  type: ProductType
 }
 
 type Subscription {
   product: Product
+}
+
+enum ProductType {
+  SOCKS
+  PANTS
 }

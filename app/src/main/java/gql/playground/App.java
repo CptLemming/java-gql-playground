@@ -45,15 +45,29 @@ public class App {
         SchemaParser schemaParser = new SchemaParser();
         TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema);
 
-        BatchLoader<String, Observable<Product>> productsBatchLoader = new BatchLoader<String, Observable<Product>>() {
+        BatchLoader<String, Float> taxBatchLoader = new BatchLoader<String, Float>() {
             @Override
-            public CompletionStage<List<Observable<Product>>> load(List<String> keys) {
+            public CompletionStage<List<Float>> load(List<String> keys) {
+                List<Float> data = new ArrayList<>();
+                System.out.println("LOAD TAX :: "+ keys);
+
+                for (int i = 0; i < keys.size(); i++) {
+                    data.add(Float.valueOf("20.50"));
+                }
+
+                return CompletableFuture.completedStage(data);
+            }
+        };
+
+        BatchLoader<ProductType, Observable<Product>> productsBatchLoader = new BatchLoader<ProductType, Observable<Product>>() {
+            @Override
+            public CompletionStage<List<Observable<Product>>> load(List<ProductType> keys) {
                 List<Product> data = new ArrayList<>();
 
                 for (int i = 1; i <= keys.size(); i++) {
                     String ID = Integer.toString(i);
                     String name = String.format("P%d", i);
-                    data.add(new Product(ID, name, Float.valueOf(0), Float.valueOf(0)));
+                    data.add(new Product(ID, name, Float.valueOf(0), Float.valueOf(0), keys.get(i - 1)));
                 }
 
                 return CompletableFuture.supplyAsync(() -> data.stream().map(Observable::just).toList());
@@ -71,9 +85,9 @@ public class App {
                 .dataFetcher("products", new DataFetcher<CompletableFuture<List<Product>>>() {
                     @Override
                     public CompletableFuture<List<Product>> get(DataFetchingEnvironment environment) {
-                        DataLoader<String, Observable<Product>> dataLoader = environment.getDataLoader("products");
+                        DataLoader<ProductType, Observable<Product>> dataLoader = environment.getDataLoader(DataLoaders.PRODUCTS.name());
 
-                        return dataLoader.loadMany(Arrays.asList("1", "2"))
+                        return dataLoader.loadMany(Arrays.asList(ProductType.SOCKS, ProductType.PANTS))
                             .thenCompose(obs -> {
                                 return Observable.combineLatestArray(obs.stream().toArray(Observable[]::new), (entries) -> entries)
                                 .firstOrErrorStage();
@@ -83,9 +97,21 @@ public class App {
                 .dataFetcher("product", new DataFetcher<CompletableFuture<Product>>() {
                     @Override
                     public CompletableFuture<Product> get(DataFetchingEnvironment environment) {
-                        DataLoader<String, Observable<Product>> dataLoader = environment.getDataLoader("products");
+                        DataLoader<ProductType, Observable<Product>> dataLoader = environment.getDataLoader(DataLoaders.PRODUCTS.name());
 
-                        return dataLoader.load("1").thenCompose(obs -> obs.firstOrErrorStage());
+                        return dataLoader.load(ProductType.SOCKS).thenCompose(obs -> obs.firstOrErrorStage());
+                    }
+                })
+            )
+            .type("Product", builder -> builder
+                .dataFetcher("cost", new StaticDataFetcher(Float.valueOf("1.00")))
+                .dataFetcher("tax", new DataFetcher<CompletableFuture<Float>>() {
+                    @Override
+                    public CompletableFuture<Float> get(DataFetchingEnvironment environment) {
+                        Product product = environment.getSource();
+                        DataLoader<String, Float> dataLoader = environment.getDataLoader(DataLoaders.TAX.name());
+
+                        return dataLoader.load(product.id);
                     }
                 })
             )
@@ -93,9 +119,9 @@ public class App {
                 .dataFetcher("product", new DataFetcher<Publisher<Product>>() {
                     @Override
                     public Publisher<Product> get(DataFetchingEnvironment environment) {
-                        DataLoader<String, Observable<Product>> dataLoader = environment.getDataLoader("products");
+                        DataLoader<ProductType, Observable<Product>> dataLoader = environment.getDataLoader(DataLoaders.PRODUCTS.name());
 
-                        return Observable.fromCompletionStage(dataLoader.load("1"))
+                        return Observable.fromCompletionStage(dataLoader.load(ProductType.SOCKS))
                             .flatMap(x -> x)
                             .doOnNext(msg -> {
                                 System.out.println("RECV -> MSG");
@@ -121,13 +147,15 @@ public class App {
             .subscriptionExecutionStrategy(new SubscriptionExecutionStrategy())
             .build();
 
-        DataLoader<String, Observable<Product>> productsDataLoader = DataLoaderFactory.newDataLoader(productsBatchLoader);
+        DataLoader<ProductType, Observable<Product>> productsDataLoader = DataLoaderFactory.newDataLoader(productsBatchLoader);
+        DataLoader<String, Float> taxDataLoader = DataLoaderFactory.newDataLoader(taxBatchLoader);
         DataLoaderRegistry registry = new DataLoaderRegistry();
-        registry.register("products", productsDataLoader);
+        registry.register(DataLoaders.PRODUCTS.name(), productsDataLoader);
+        registry.register(DataLoaders.TAX.name(), taxDataLoader);
 
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
             // .query("subscription GET_PRODUCT { product { id, name, cost, tax }}")
-            .query("query GET_PRODUCT { product { id, name, cost, tax }}")
+            .query("query GET_PRODUCT { products { id, name, cost, tax, type }}")
             .dataLoaderRegistry(registry)
             .build();
 
@@ -176,12 +204,24 @@ public class App {
         final String name;
         final Float cost;
         final Float tax;
+        final ProductType type;
 
-        public Product(String id, String name, Float cost, Float tax) {
+        public Product(String id, String name, Float cost, Float tax, ProductType type) {
             this.id = id;
             this.name = name;
             this.cost = cost;
             this.tax = tax;
+            this.type = type;
         }
+    }
+
+    public static enum ProductType {
+        SOCKS,
+        PANTS
+    }
+
+    public static enum DataLoaders {
+        PRODUCTS,
+        TAX
     }
 }
