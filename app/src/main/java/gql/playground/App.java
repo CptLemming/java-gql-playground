@@ -1,5 +1,6 @@
 package gql.playground;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,21 +40,7 @@ import io.reactivex.rxjava3.core.Flowable;
 
 public class App {
     public static void main(String[] args) {
-        String schema = "type Query { \n";
-        schema += "  hello: String \n";
-        schema += "  products: [Product] \n";
-        schema += "  product: Product \n";
-        schema += "} \n";
-        schema += "type Product { \n";
-        schema += "  id: ID \n";
-        schema += "  name: String \n";
-        schema += "  description: String \n";
-        schema += "  cost: Float \n";
-        schema += "  tax: Float \n";
-        schema += "} \n";
-        schema += "type Subscription { \n";
-        schema += "  product: Product \n";
-        schema += "} \n";
+        InputStream schema = App.class.getClassLoader().getResourceAsStream("schema.graphql");
 
         SchemaParser schemaParser = new SchemaParser();
         TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema);
