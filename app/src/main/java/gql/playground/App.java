@@ -12,6 +12,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.dataloader.BatchLoader;
+import org.dataloader.BatchLoaderEnvironment;
+import org.dataloader.BatchLoaderWithContext;
 import org.dataloader.DataLoader;
 import org.dataloader.DataLoaderFactory;
 import org.dataloader.DataLoaderRegistry;
@@ -45,14 +47,16 @@ public class App {
         SchemaParser schemaParser = new SchemaParser();
         TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(schema);
 
-        BatchLoader<String, Float> taxBatchLoader = new BatchLoader<String, Float>() {
+        BatchLoaderWithContext<String, Float> taxBatchLoader = new BatchLoaderWithContext<String, Float>() {
             @Override
-            public CompletionStage<List<Float>> load(List<String> keys) {
+            public CompletionStage<List<Float>> load(List<String> keys, BatchLoaderEnvironment loaderContext) {
                 List<Float> data = new ArrayList<>();
-                System.out.println("LOAD TAX :: "+ keys);
+                System.out.println("TAX Loader :: "+ keys);
+                Map<Object, Object> keysContext = loaderContext.getKeyContexts();
 
                 for (int i = 0; i < keys.size(); i++) {
-                    data.add(Float.valueOf("20.50"));
+                    Product product = (Product) keysContext.get(keys.get(i));
+                    data.add(Float.valueOf("20.50") * Integer.parseInt(product.id));
                 }
 
                 return CompletableFuture.completedStage(data);
@@ -63,6 +67,7 @@ public class App {
             @Override
             public CompletionStage<List<Observable<Product>>> load(List<ProductType> keys) {
                 List<Product> data = new ArrayList<>();
+                System.out.println("PRODUCTS Loader :: "+ keys);
 
                 for (int i = 1; i <= keys.size(); i++) {
                     String ID = Integer.toString(i);
@@ -111,7 +116,7 @@ public class App {
                         Product product = environment.getSource();
                         DataLoader<String, Float> dataLoader = DataLoaderHelper.getTaxLoader(environment);
 
-                        return dataLoader.load(product.id);
+                        return dataLoader.load(product.id, product);
                     }
                 })
             )
