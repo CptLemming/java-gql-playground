@@ -67,7 +67,7 @@ public class App {
                 for (int i = 1; i <= keys.size(); i++) {
                     String ID = Integer.toString(i);
                     String name = String.format("P%d", i);
-                    data.add(new Product(ID, name, Float.valueOf(0), Float.valueOf(0), keys.get(i - 1)));
+                    data.add(new Product(ID, name, keys.get(i - 1)));
                 }
 
                 return CompletableFuture.supplyAsync(() -> data.stream().map(Observable::just).toList());
@@ -85,7 +85,7 @@ public class App {
                 .dataFetcher("products", new DataFetcher<CompletableFuture<List<Product>>>() {
                     @Override
                     public CompletableFuture<List<Product>> get(DataFetchingEnvironment environment) {
-                        DataLoader<ProductType, Observable<Product>> dataLoader = environment.getDataLoader(DataLoaders.PRODUCTS.name());
+                        DataLoader<ProductType, Observable<Product>> dataLoader = DataLoaderHelper.getProductsLoader(environment);
 
                         return dataLoader.loadMany(Arrays.asList(ProductType.SOCKS, ProductType.PANTS))
                             .thenCompose(obs -> {
@@ -97,7 +97,7 @@ public class App {
                 .dataFetcher("product", new DataFetcher<CompletableFuture<Product>>() {
                     @Override
                     public CompletableFuture<Product> get(DataFetchingEnvironment environment) {
-                        DataLoader<ProductType, Observable<Product>> dataLoader = environment.getDataLoader(DataLoaders.PRODUCTS.name());
+                        DataLoader<ProductType, Observable<Product>> dataLoader = DataLoaderHelper.getProductsLoader(environment);
 
                         return dataLoader.load(ProductType.SOCKS).thenCompose(obs -> obs.firstOrErrorStage());
                     }
@@ -109,7 +109,7 @@ public class App {
                     @Override
                     public CompletableFuture<Float> get(DataFetchingEnvironment environment) {
                         Product product = environment.getSource();
-                        DataLoader<String, Float> dataLoader = environment.getDataLoader(DataLoaders.TAX.name());
+                        DataLoader<String, Float> dataLoader = DataLoaderHelper.getTaxLoader(environment);
 
                         return dataLoader.load(product.id);
                     }
@@ -119,7 +119,7 @@ public class App {
                 .dataFetcher("product", new DataFetcher<Publisher<Product>>() {
                     @Override
                     public Publisher<Product> get(DataFetchingEnvironment environment) {
-                        DataLoader<ProductType, Observable<Product>> dataLoader = environment.getDataLoader(DataLoaders.PRODUCTS.name());
+                        DataLoader<ProductType, Observable<Product>> dataLoader = DataLoaderHelper.getProductsLoader(environment);
 
                         return Observable.fromCompletionStage(dataLoader.load(ProductType.SOCKS))
                             .flatMap(x -> x)
@@ -199,18 +199,26 @@ public class App {
         // Prints: {hello=world}
     }
 
+    public static class DataLoaderHelper {
+        public static DataLoader<ProductType, Observable<Product>> getProductsLoader(DataFetchingEnvironment environment) {
+            return environment.getDataLoader(DataLoaders.PRODUCTS.name());
+        }
+
+        public static DataLoader<String, Float> getTaxLoader(DataFetchingEnvironment environment) {
+            return environment.getDataLoader(DataLoaders.TAX.name());
+        }
+    }
+
     public static class Product {
         final String id;
         final String name;
-        final Float cost;
-        final Float tax;
+        Float cost;
+        Float tax;
         final ProductType type;
 
-        public Product(String id, String name, Float cost, Float tax, ProductType type) {
+        public Product(String id, String name, ProductType type) {
             this.id = id;
             this.name = name;
-            this.cost = cost;
-            this.tax = tax;
             this.type = type;
         }
     }
