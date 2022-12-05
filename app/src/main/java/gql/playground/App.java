@@ -10,7 +10,11 @@ public class App {
     final Loaders loaders;
 
     public App() {
-        this.graph = new Graph(Schema.withSchema(Runtime.withRegistry()));
+        this.graph = new Graph(
+            new Schema(
+                new Runtime().getWiring()
+            ).getSchema()
+        );
         this.loaders = new Loaders();
     }
 

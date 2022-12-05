@@ -25,11 +25,7 @@ public class Schema {
     return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
   }
 
-  public static GraphQLSchema withSchema(RuntimeWiring runtimeWiring) {
-    return new Schema(runtimeWiring).getSChema();
-  }
-
-  public GraphQLSchema getSChema() {
+  public GraphQLSchema getSchema() {
     return schema;
   }
 }

@@ -7,6 +7,17 @@ import graphql.ExecutionResult;
 import io.reactivex.rxjava3.core.Observable;
 
 class AppTest {
+    @Test void helloWorld() {
+        App app = new App();
+
+        ExecutionResult executionResult = app.query("query { hello }");
+
+        System.out.println("== DATA");
+        System.out.println((Object) executionResult.getData());
+        System.out.println("** ERR");
+        System.err.println(executionResult.getErrors());
+    }
+
     @Test void getProduct() {
         App app = new App();
 

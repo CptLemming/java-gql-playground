@@ -46,10 +46,6 @@ public class Graph {
     return result.getData();
   }
 
-  public static GraphQL withGraph(GraphQLSchema graphQLSchema) {
-    return new Graph(graphQLSchema).getGraph();
-  }
-
   public GraphQL getGraph() {
     return graph;
   }
