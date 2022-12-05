@@ -12,7 +12,7 @@ import gql.playground.models.Product;
 import io.reactivex.rxjava3.core.Observable;
 
 public class ProductLoader implements BatchLoader<ProductType, Observable<Product>> {
-  
+
   @Override
   public CompletionStage<List<Observable<Product>>> load(List<ProductType> keys) {
       List<Product> data = new ArrayList<>();
