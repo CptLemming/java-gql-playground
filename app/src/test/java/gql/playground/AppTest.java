@@ -40,6 +40,17 @@ class AppTest {
         System.err.println(executionResult.getErrors());
     }
 
+    @Test void getAliasProduct() {
+        App app = new App();
+
+        ExecutionResult executionResult = app.query("query GET_PRODUCT { productA: product(productType:SOCKS) { id, name, cost, tax, type } productB: product(productType:PANTS) { id, name, cost, tax, type }}");
+
+        System.out.println("== DATA");
+        System.out.println((Object) executionResult.getData());
+        System.out.println("** ERR");
+        System.err.println(executionResult.getErrors());
+    }
+
     @Test void subscribeProduct() {
         App app = new App();
 

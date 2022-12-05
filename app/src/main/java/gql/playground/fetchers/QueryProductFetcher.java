@@ -1,5 +1,6 @@
 package gql.playground.fetchers;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.dataloader.DataLoader;
@@ -15,7 +16,10 @@ public class QueryProductFetcher implements DataFetcher<CompletableFuture<Produc
     @Override
     public CompletableFuture<Product> get(DataFetchingEnvironment environment) {
         DataLoader<ProductType, Observable<Product>> dataLoader = Loaders.getProductsLoader(environment);
+        ProductType productType = Optional.<String>ofNullable(environment.getArgument("productType"))
+            .map(ProductType::valueOf)
+            .orElse(ProductType.SOCKS);
 
-        return dataLoader.load(ProductType.SOCKS).thenCompose(obs -> obs.firstOrErrorStage());
+        return dataLoader.load(productType).thenCompose(obs -> obs.firstOrErrorStage());
     }
 }

@@ -1,7 +1,7 @@
 type Query {
   hello: String
   products: [Product]
-  product: Product
+  product(productType: ProductType): Product
 }
 
 type Product {
@@ -14,7 +14,7 @@ type Product {
 }
 
 type Subscription {
-  product: Product
+  product(productType: ProductType): Product
 }
 
 enum ProductType {
