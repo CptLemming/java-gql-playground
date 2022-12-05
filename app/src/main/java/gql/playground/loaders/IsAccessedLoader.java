@@ -9,19 +9,19 @@ import java.util.concurrent.CompletionStage;
 import org.dataloader.BatchLoaderEnvironment;
 import org.dataloader.BatchLoaderWithContext;
 
-import gql.playground.models.Product;
+import gql.playground.models.Fader;
 
-public class TaxLoader implements BatchLoaderWithContext<String, Float> {
+public class IsAccessedLoader implements BatchLoaderWithContext<String, Boolean> {
   
   @Override
-  public CompletionStage<List<Float>> load(List<String> keys, BatchLoaderEnvironment loaderContext) {
-      List<Float> data = new ArrayList<>();
-      System.out.println("TAX Loader :: "+ keys);
+  public CompletionStage<List<Boolean>> load(List<String> keys, BatchLoaderEnvironment loaderContext) {
+      List<Boolean> data = new ArrayList<>();
+      System.out.println("ACCESSED Loader :: "+ keys);
       Map<Object, Object> keysContext = loaderContext.getKeyContexts();
 
       for (int i = 0; i < keys.size(); i++) {
-          Product product = (Product) keysContext.get(keys.get(i));
-          data.add(Float.valueOf("20.50") * Integer.parseInt(product.getId()));
+          Fader fader = (Fader) keysContext.get(keys.get(i));
+          data.add(fader.getId().equals("1"));
       }
 
       return CompletableFuture.completedStage(data);

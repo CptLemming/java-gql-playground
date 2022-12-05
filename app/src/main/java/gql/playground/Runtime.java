@@ -1,7 +1,6 @@
 package gql.playground;
 
 import gql.playground.fetchers.*;
-import graphql.schema.StaticDataFetcher;
 import graphql.schema.idl.RuntimeWiring;
 
 public class Runtime {
@@ -15,15 +14,14 @@ public class Runtime {
     return RuntimeWiring.newRuntimeWiring()
       .type("Query", builder -> builder
           .dataFetcher("hello", new HelloFetcher())
-          .dataFetcher("products", new QueryProductsFetcher())
-          .dataFetcher("product", new QueryProductFetcher())
+          .dataFetcher("faders", new QueryFadersFetcher())
+          .dataFetcher("fader", new QueryFaderFetcher())
       )
-      .type("Product", builder -> builder
-          .dataFetcher("cost", new StaticDataFetcher(Float.valueOf("1.00")))
-          .dataFetcher("tax", new ProductTaxFetcher())
+      .type("Fader", builder -> builder
+          .dataFetcher("isAccessed", new FaderIsAccessedFetcher())
       )
       .type("Subscription", builder -> builder
-          .dataFetcher("product", new SubscribeProductFetcher())
+          .dataFetcher("fader", new SubscribeFaderFetcher())
       )
       .build();
   }

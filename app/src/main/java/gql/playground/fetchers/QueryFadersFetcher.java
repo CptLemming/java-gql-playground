@@ -7,20 +7,20 @@ import java.util.concurrent.CompletableFuture;
 import org.dataloader.DataLoader;
 
 import gql.playground.Loaders;
-import gql.playground.enums.ProductType;
-import gql.playground.models.Product;
+import gql.playground.enums.PathType;
+import gql.playground.models.Fader;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.reactivex.rxjava3.core.Observable;
 
-public class QueryProductsFetcher implements DataFetcher<CompletableFuture<List<Product>>>{
+public class QueryFadersFetcher implements DataFetcher<CompletableFuture<List<Fader>>>{
 
     @Override
     @SuppressWarnings("unchecked")
-    public CompletableFuture<List<Product>> get(DataFetchingEnvironment environment) {
-        DataLoader<ProductType, Observable<Product>> dataLoader = Loaders.getProductsLoader(environment);
+    public CompletableFuture<List<Fader>> get(DataFetchingEnvironment environment) {
+        DataLoader<PathType, Observable<Fader>> dataLoader = Loaders.getFadersLoader(environment);
 
-        return dataLoader.loadMany(Arrays.asList(ProductType.SOCKS, ProductType.PANTS))
+        return dataLoader.loadMany(Arrays.asList(PathType.CHANNEL, PathType.MAIN))
             .thenCompose(obs -> {
                 return Observable.combineLatestArray(obs.stream().toArray(Observable[]::new), (entries) -> entries)
                 .firstOrErrorStage();

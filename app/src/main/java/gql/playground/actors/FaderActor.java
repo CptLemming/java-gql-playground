@@ -11,26 +11,26 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
-import gql.playground.enums.ProductType;
-import gql.playground.models.Product;
+import gql.playground.enums.PathType;
+import gql.playground.models.Fader;
 import io.reactivex.rxjava3.core.Observable;
 
-public class ProductActor extends AbstractBehavior<ProductActor.Command> {
-  public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "product-service");
+public class FaderActor extends AbstractBehavior<FaderActor.Command> {
+  public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "fader-service");
   
   public static interface Command {}
 
-  public static record FetchProducts(List<ProductType> products, ActorRef<List<Observable<Product>>> replyTo) implements Command {};
+  public static record FetchFaders(List<PathType> faders, ActorRef<List<Observable<Fader>>> replyTo) implements Command {};
 
   public static Behavior<Command> create() {
     return Behaviors.<Command>setup(context -> {
-        System.out.println("REGISTER PRODUCT ACTOR");
+        System.out.println("REGISTER FADERS ACTOR");
         context.getSystem().receptionist().tell(Receptionist.register(SERVICE_KEY, context.getSelf()));
-        return new ProductActor(context);
+        return new FaderActor(context);
       });
   }
 
-  private ProductActor(
+  private FaderActor(
     ActorContext<Command> context
   ) {
     super(context);
@@ -39,18 +39,18 @@ public class ProductActor extends AbstractBehavior<ProductActor.Command> {
   @Override
   public Receive<Command> createReceive() {
     return newReceiveBuilder()
-      .onMessage(FetchProducts.class, this::onMessage)
+      .onMessage(FetchFaders.class, this::onMessage)
       .build();
   }
 
-  private Behavior<Command> onMessage(FetchProducts request) {
-    List<Product> data = new ArrayList<>();
-    System.out.println("PRODUCTS Actor :: "+ request.products);
+  private Behavior<Command> onMessage(FetchFaders request) {
+    List<Fader> data = new ArrayList<>();
+    System.out.println("FADERS Actor :: "+ request.faders);
 
-    for (int i = 1; i <= request.products.size(); i++) {
+    for (int i = 1; i <= request.faders.size(); i++) {
         String ID = Integer.toString(i);
-        String name = String.format("P%d", i);
-        data.add(new Product(ID, name, request.products.get(i - 1)));
+        String name = String.format("F%d", i);
+        data.add(new Fader(ID, name, request.faders.get(i - 1)));
     }
 
     request.replyTo.tell(data.stream().map(Observable::just).toList());

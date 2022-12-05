@@ -1,23 +1,24 @@
 type Query {
   hello: String
-  products: [Product]
-  product(productType: ProductType): Product
+  faders: [Fader]
+  fader(pathType: PathType): Fader
 }
 
-type Product {
+type Fader {
   id: ID
-  name: String
-  description: String
-  cost: Float
-  tax: Float
-  type: ProductType
+  label: String
+  isAccessed: Boolean
+  type: PathType
 }
 
 type Subscription {
-  product(productType: ProductType): Product
+  fader(pathType: PathType): Fader
 }
 
-enum ProductType {
-  SOCKS
-  PANTS
+enum PathType {
+  CHANNEL,
+  MAIN,
+  GROUP,
+  AUX,
+  TRACK
 }

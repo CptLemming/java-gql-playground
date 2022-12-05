@@ -20,10 +20,10 @@ class AppTest {
         System.err.println(executionResult.getErrors());
     }
 
-    @Test void getProduct() {
+    @Test void getFader() {
         App app = new App();
 
-        ExecutionResult executionResult = app.query("query GET_PRODUCT { product { id, name, cost, tax }}");
+        ExecutionResult executionResult = app.query("query GET_FADER { fader { id, label, isAccessed }}");
 
         System.out.println("== DATA");
         System.out.println((Object) executionResult.getData());
@@ -31,10 +31,10 @@ class AppTest {
         System.err.println(executionResult.getErrors());
     }
 
-    @Test void getProducts() {
+    @Test void getFaders() {
         App app = new App();
 
-        ExecutionResult executionResult = app.query("query GET_PRODUCTS { products { id, name, cost, tax, type }}");
+        ExecutionResult executionResult = app.query("query GET_FADERS { faders { id, label, isAccessed, type }}");
 
         System.out.println("== DATA");
         System.out.println((Object) executionResult.getData());
@@ -42,10 +42,10 @@ class AppTest {
         System.err.println(executionResult.getErrors());
     }
 
-    @Test void getAliasProduct() {
+    @Test void getAliasFader() {
         App app = new App();
 
-        ExecutionResult executionResult = app.query("query GET_PRODUCT { productA: product(productType:SOCKS) { id, name, cost, tax, type } productB: product(productType:PANTS) { id, name, cost, tax, type }}");
+        ExecutionResult executionResult = app.query("query GET_FADER { faderA: fader(pathType:MAIN) { id, label, isAccessed, type } faderB: fader(pathType:GROUP) { id, label, isAccessed, type }}");
 
         System.out.println("== DATA");
         System.out.println((Object) executionResult.getData());
@@ -53,10 +53,10 @@ class AppTest {
         System.err.println(executionResult.getErrors());
     }
 
-    @Test void subscribeProduct() {
+    @Test void subscribeFader() {
         App app = new App();
 
-        Publisher<ExecutionResult> dataStream = app.subscribe("subscription GET_PRODUCT { product { id, name, cost, tax, type }}");
+        Publisher<ExecutionResult> dataStream = app.subscribe("subscription GET_FADER { fader { id, label, isAccessed, type }}");
 
         Observable.fromPublisher(dataStream).blockingSubscribe(executionResult -> {
             System.out.println("== DATA");
@@ -66,14 +66,15 @@ class AppTest {
         });
     }
 
-    @Test void retrieveProductActor() throws InterruptedException, ExecutionException {
+    @Test void retrieveFaderActor() throws InterruptedException, ExecutionException {
         App app = new App();
+        Context ctx = new Context(app.getSystem());
         System.out.println(">> Starting");
 
         for (int i = 0; i < 10; i++) {
             System.out.println("BEGIN FETCH : "+ i);
             long runStart = System.nanoTime();
-            app.getProductActor().toCompletableFuture().join();
+            ctx.getFaderActor().toCompletableFuture().join();
             long runEnd = System.nanoTime();
             System.out.println("END FETCH : "+ Duration.ofNanos(runEnd - runStart).toNanos() + "ns");
         }
