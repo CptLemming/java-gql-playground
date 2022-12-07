@@ -44,16 +44,16 @@ public class FaderActor extends AbstractBehavior<FaderActor.Command> {
   }
 
   private Behavior<Command> onMessage(FetchFaders request) {
-    List<Fader> data = new ArrayList<>();
+    List<Observable<Fader>> data = new ArrayList<>();
     System.out.println("FADERS Actor :: "+ request.faders);
 
     for (int i = 1; i <= request.faders.size(); i++) {
         String ID = Integer.toString(i);
         String name = String.format("F%d", i);
-        data.add(new Fader(ID, name, request.faders.get(i - 1)));
+        data.add(Observable.just(new Fader(ID, name, request.faders.get(i - 1))));
     }
 
-    request.replyTo.tell(data.stream().map(Observable::just).toList());
+    request.replyTo.tell(data);
 
     return Behaviors.same();
   }
