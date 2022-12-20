@@ -20,7 +20,7 @@ public class FaderActor extends AbstractBehavior<FaderActor.Command> {
   
   public static interface Command {}
 
-  public static record FetchFaders(List<PathType> faders, ActorRef<List<Observable<Fader>>> replyTo) implements Command {};
+  public static record FetchFaders(List<String> faders, ActorRef<List<Observable<Fader>>> replyTo) implements Command {};
 
   public static Behavior<Command> create() {
     return Behaviors.<Command>setup(context -> {
@@ -48,9 +48,8 @@ public class FaderActor extends AbstractBehavior<FaderActor.Command> {
     System.out.println("FADERS Actor :: "+ request.faders);
 
     for (int i = 1; i <= request.faders.size(); i++) {
-        String ID = Integer.toString(i);
         String name = String.format("F%d", i);
-        data.add(new Fader(ID, name, request.faders.get(i - 1)));
+        data.add(new Fader(request.faders.get(i - 1), name, PathType.CHANNEL));
     }
 
     request.replyTo.tell(data.stream().map(Observable::just).toList());

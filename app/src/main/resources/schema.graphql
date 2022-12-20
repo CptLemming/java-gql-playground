@@ -1,7 +1,7 @@
 type Query {
   hello: String
   faders: [Fader]
-  fader(pathType: PathType): Fader
+  fader(faderID: String): Fader
 }
 
 type Fader {
@@ -12,7 +12,7 @@ type Fader {
 }
 
 type Subscription {
-  fader(pathType: PathType): Fader
+  fader(faderID: String): Fader
 }
 
 enum PathType {

@@ -15,14 +15,13 @@ import akka.actor.typed.ActorSystem;
 import akka.actor.typed.javadsl.AskPattern;
 import gql.playground.Context;
 import gql.playground.actors.FaderActor;
-import gql.playground.enums.PathType;
 import gql.playground.models.Fader;
 import io.reactivex.rxjava3.core.Observable;
 
-public class FaderLoader implements BatchLoaderWithContext<PathType, Observable<Fader>> {
+public class FaderLoader implements BatchLoaderWithContext<String, Observable<Fader>> {
 
   @Override
-  public CompletionStage<List<Observable<Fader>>> load(List<PathType> keys, BatchLoaderEnvironment loaderContext) {
+  public CompletionStage<List<Observable<Fader>>> load(List<String> keys, BatchLoaderEnvironment loaderContext) {
     System.out.println("FADERS Loader :: "+ keys);
     Context ctx = loaderContext.getContext();
       ActorSystem<Void> system = ctx.getSystem();

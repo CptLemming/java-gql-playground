@@ -45,7 +45,7 @@ class AppTest {
     @Test void getAliasFader() {
         App app = new App();
 
-        ExecutionResult executionResult = app.query("query GET_FADER { faderA: fader(pathType:MAIN) { id, label, isAccessed, type } faderB: fader(pathType:GROUP) { id, label, isAccessed, type }}");
+        ExecutionResult executionResult = app.query("query GET_FADER { faderA: fader(faderID: \"L1F1\") { id, label, isAccessed, type } faderB: fader(faderID: \"L1F2\") { id, label, isAccessed, type }}");
 
         System.out.println("== DATA");
         System.out.println((Object) executionResult.getData());

@@ -11,7 +11,6 @@ import org.dataloader.DataLoaderRegistry;
 import org.dataloader.ValueCache;
 
 import akka.actor.typed.ActorSystem;
-import gql.playground.enums.PathType;
 import gql.playground.loaders.FaderLoader;
 import gql.playground.loaders.IsAccessedLoader;
 import gql.playground.models.Fader;
@@ -27,7 +26,7 @@ public class Loaders {
 
   private DataLoaderRegistry build(ActorSystem<Void> system) {
     BatchLoaderWithContext<String, Boolean> isAccessedLoader = new IsAccessedLoader();
-    BatchLoaderWithContext<PathType, Observable<Fader>> fadersBatchLoader = new FaderLoader();
+    BatchLoaderWithContext<String, Observable<Fader>> fadersBatchLoader = new FaderLoader();
 
     BatchLoaderContextProvider contextProvider = new BatchLoaderContextProvider() {
         @Override
@@ -36,21 +35,21 @@ public class Loaders {
         }
     };
 
-    ValueCache<PathType, Observable<Fader>> fadersValueCache = new ValueCache<PathType, Observable<Fader>>() {
+    ValueCache<String, Observable<Fader>> fadersValueCache = new ValueCache<String, Observable<Fader>>() {
         @Override
-        public CompletableFuture<Observable<Fader>> get(PathType key) {
+        public CompletableFuture<Observable<Fader>> get(String key) {
             System.out.println("CACHE GET :: "+ key);
             return CompletableFuture.failedFuture(new Exception("Cache is empty"));
         }
 
         @Override
-        public CompletableFuture<Observable<Fader>> set(PathType key, Observable<Fader> value) {
+        public CompletableFuture<Observable<Fader>> set(String key, Observable<Fader> value) {
           System.out.println("CACHE SET :: "+ key + " -> "+ value);
             return CompletableFuture.failedFuture(new Exception("Caching not supported"));
         }
     
         @Override
-        public CompletableFuture<Void> delete(PathType key) {
+        public CompletableFuture<Void> delete(String key) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -65,7 +64,7 @@ public class Loaders {
       .setValueCache(fadersValueCache);
     DataLoaderOptions isAccessedLoaderOptions = DataLoaderOptions.newOptions()
       .setBatchLoaderContextProvider(contextProvider);
-    DataLoader<PathType, Observable<Fader>> fadersDataLoader = DataLoaderFactory.newDataLoader(fadersBatchLoader, fadersLoaderOptions);
+    DataLoader<String, Observable<Fader>> fadersDataLoader = DataLoaderFactory.newDataLoader(fadersBatchLoader, fadersLoaderOptions);
     DataLoader<String, Boolean> isAccessedDataLoader = DataLoaderFactory.newDataLoader(isAccessedLoader, isAccessedLoaderOptions);
     DataLoaderRegistry registry = new DataLoaderRegistry();
     registry.register(DataLoaders.FADERS.name(), fadersDataLoader);
@@ -83,7 +82,7 @@ public class Loaders {
       ACCESSED
   }
 
-  public static DataLoader<PathType, Observable<Fader>> getFadersLoader(DataFetchingEnvironment environment) {
+  public static DataLoader<String, Observable<Fader>> getFadersLoader(DataFetchingEnvironment environment) {
       return environment.getDataLoader(DataLoaders.FADERS.name());
   }
 
