@@ -1,0 +1,32 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "gradle",
+			"id": "/home/ash/workspace/java-gql-playgroundapp:fullJarapp",
+			"script": "app:fullJar",
+			"description": "",
+			"group": "other",
+			"project": "app",
+			"buildFile": "/home/ash/workspace/java-gql-playground/app/build.gradle",
+			"rootProject": "javagqlplayground",
+			"projectFolder": "/home/ash/workspace/java-gql-playground",
+			"workspaceFolder": "/home/ash/workspace/java-gql-playground",
+			"args": "",
+			"javaDebug": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"label": "Build jar"
+		},
+		{
+			"label": "Run jar",
+			"type": "shell",
+			"command": "java -jar ./app/build/libs/app-all.jar",
+			"options": {
+				"cwd": "${workspaceRoot}"
+			},
+			"problemMatcher": []
+		}
+	]
+}

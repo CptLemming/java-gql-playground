@@ -17,6 +17,19 @@ public class App {
     final ActorSystem<Void> system;
     CompletableFuture<Done> isReady = new CompletableFuture<>();
 
+    public static void main(String[] args) {
+        App app = new App();
+        String query = "query GET_FADERS { faders { id, label, isAccessed, type }}";
+        System.out.println("Running query :: "+ query);
+
+        ExecutionResult executionResult = app.query(query);
+
+        System.out.println("== DATA");
+        System.out.println((Object) executionResult.getData());
+        System.out.println("** ERR");
+        System.err.println(executionResult.getErrors());
+    }
+
     public App() {
         this.graph = new Graph(
             new Schema(
