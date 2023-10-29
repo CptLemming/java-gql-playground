@@ -12,32 +12,43 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import io.reactivex.rxjava3.subjects.Subject;
 import java.util.function.BiFunction;
+import java.time.Duration;
 
 public class ActorApp {
   public static Integer TICKER_MS = 10;
   public static Integer NUM_CHILDREN = 1000;
   public static void main(String[] args) {
-    PublishSubject<String> rootSubject = PublishSubject.create();
-    BiFunction<Integer, Subject<String>, Behavior<ChildCommand>> createChild = (index, subject) -> Behaviors.setup(context -> {
+    BiFunction<Integer, Subject<String>, Behavior<ChildCommand>> createChild = (index, parentSubject) -> Behaviors.withTimers(timers -> Behaviors.setup(context -> {
+      Subject<String> subject = PublishSubject.<String>create();
       Observable.interval(ActorApp.TICKER_MS, TimeUnit.MILLISECONDS)
         .subscribe(ticker -> {
           context.getSelf().tell(new SendMessageToChild("PING"));
         });
+
+      subject
+        // .observeOn(Schedulers.single(), false, 16)
+        .subscribe(msg -> parentSubject.onNext(msg));
+
+      timers.startTimerAtFixedRate("ticker", new ChildHealthCheck(), Duration.ofSeconds(1));
 
       return Behaviors.receive(ChildCommand.class)
         .onMessage(SendMessageToChild.class, command -> {
           subject.onNext(String.format("Child %d sends %s", index, command.message));
           return Behaviors.same();
         })
+        .onMessage(ChildHealthCheck.class, command -> {
+          System.out.println(String.format("Child %d is OK", index));
+          return Behaviors.same();
+        })
         .build();
-    });
+    }));
 
     Behavior<ParentCommand> parent = Behaviors.setup(context -> {
-
+      Subject<String> rootSubject = PublishSubject.<String>create();
       rootSubject
-        .subscribeOn(Schedulers.single())
-        .observeOn(Schedulers.single())
-        .unsubscribeOn(Schedulers.single())
+        // .subscribeOn(Schedulers.single())
+        // .observeOn(Schedulers.single())
+        // .unsubscribeOn(Schedulers.single())
         .subscribe(msg -> {
           System.out.println("Parent received -> "+ msg);
         });
@@ -68,4 +79,5 @@ public class ActorApp {
 
   public static interface ChildCommand {}
   public static record SendMessageToChild(String message) implements ChildCommand {}
+  public static record ChildHealthCheck() implements ChildCommand {}
 }

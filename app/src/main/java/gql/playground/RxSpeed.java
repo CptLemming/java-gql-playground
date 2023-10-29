@@ -26,35 +26,35 @@ public class RxSpeed {
     List<Pair<Integer, Long>> times = new ArrayList<>();
     Long avg = 0L;
 
-    for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
-      long start = System.nanoTime();
-      app.manualGrouping();
-      long end = (System.nanoTime() - start) / 1000;
-      times.add(Pair.create(i, end));
+    // for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
+    //   long start = System.nanoTime();
+    //   app.manualGrouping();
+    //   long end = (System.nanoTime() - start) / 1000;
+    //   times.add(Pair.create(i, end));
 
-      System.out.println("manualGrouping("+ i + ") -> "+ end + "us");
-    }
-    avg = times.stream()
-      .filter(pair -> pair.first() >= NUM_WARMUP)
-      .map(Pair::second)
-      .collect(Collectors.summingLong(x -> x)) / NUM_TIMES;
-    System.out.println("manualGrouping(AVG) -> "+ avg + "us");
-    times.clear();
+    //   System.out.println("manualGrouping("+ i + ") -> "+ end + "us");
+    // }
+    // avg = times.stream()
+    //   .filter(pair -> pair.first() >= NUM_WARMUP)
+    //   .map(Pair::second)
+    //   .collect(Collectors.summingLong(x -> x)) / NUM_TIMES;
+    // System.out.println("manualGrouping(AVG) -> "+ avg + "us");
+    // times.clear();
 
-    for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
-      long start = System.nanoTime();
-      app.filterSubject();
-      long end = (System.nanoTime() - start) / 1000;
-      times.add(Pair.create(i, end));
+    // for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
+    //   long start = System.nanoTime();
+    //   app.filterSubject();
+    //   long end = (System.nanoTime() - start) / 1000;
+    //   times.add(Pair.create(i, end));
 
-      System.out.println("filterSubject("+ i + ") -> "+ end + "us");
-    }
-    avg = times.stream()
-      .filter(pair -> pair.first() >= NUM_WARMUP)
-      .map(Pair::second)
-      .collect(Collectors.summingLong(x -> x)) / NUM_TIMES;
-    System.out.println("filterSubject(AVG) -> "+ avg + "us");
-    times.clear();
+    //   System.out.println("filterSubject("+ i + ") -> "+ end + "us");
+    // }
+    // avg = times.stream()
+    //   .filter(pair -> pair.first() >= NUM_WARMUP)
+    //   .map(Pair::second)
+    //   .collect(Collectors.summingLong(x -> x)) / NUM_TIMES;
+    // System.out.println("filterSubject(AVG) -> "+ avg + "us");
+    // times.clear();
 
     for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
       long start = System.nanoTime();
@@ -71,20 +71,20 @@ public class RxSpeed {
     System.out.println("filterObserveOn(AVG) -> "+ avg + "us");
     times.clear();
 
-    for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
-      long start = System.nanoTime();
-      app.groupBy();
-      long end = (System.nanoTime() - start) / 1000;
-      times.add(Pair.create(i, end));
+    // for (int i = 0; i < NUM_WARMUP + NUM_TIMES; i++) {
+    //   long start = System.nanoTime();
+    //   app.groupBy();
+    //   long end = (System.nanoTime() - start) / 1000;
+    //   times.add(Pair.create(i, end));
 
-      System.out.println("groupBy("+ i + ") -> "+ end + "us");
-    }
-    avg = times.stream()
-      .filter(pair -> pair.first() >= NUM_WARMUP)
-      .map(Pair::second)
-      .collect(Collectors.summingLong(x -> x)) / NUM_TIMES;
-    System.out.println("groupBy(AVG) -> "+ avg + "us");
-    times.clear();
+    //   System.out.println("groupBy("+ i + ") -> "+ end + "us");
+    // }
+    // avg = times.stream()
+    //   .filter(pair -> pair.first() >= NUM_WARMUP)
+    //   .map(Pair::second)
+    //   .collect(Collectors.summingLong(x -> x)) / NUM_TIMES;
+    // System.out.println("groupBy(AVG) -> "+ avg + "us");
+    // times.clear();
   }
 
   private void filterSubject() throws InterruptedException {
@@ -94,13 +94,25 @@ public class RxSpeed {
 
     for (int i = 0; i < NUM_ITERATIONS; i++) {
       final Integer index = i;
-      disposable.add(subject.filter(msg -> msg.first().equals(index)).subscribe(ignore -> {
-        fibonacci(24);
-        latch.countDown();
-      }));
+      disposable.add(subject
+        .filter(msg -> {
+          System.out.println("filterSubject:Filter -> "+ index + " on "+ Thread.currentThread().getName());
+          return msg.first().equals(index);
+        })
+        .map(ignore -> {
+          System.out.println("filterSubject:Map -> "+ index + " on "+ Thread.currentThread().getName());
+          fibonacci(24);
+          return ignore;
+        })
+        .subscribe(ignore -> {
+          System.out.println("filterSubject:Subscribe -> "+ index + " on "+ Thread.currentThread().getName());
+          fibonacci(24);
+          latch.countDown();
+        }));
     }
 
     for (int i = 0; i < NUM_ITERATIONS; i++) {
+      System.out.println("filterSubject:Publish "+ i +" on "+ Thread.currentThread().getName());
       subject.onNext(Pair.create(i, i));
     }
 
@@ -115,13 +127,26 @@ public class RxSpeed {
 
     for (int i = 0; i < NUM_ITERATIONS; i++) {
       final Integer index = i;
-      disposable.add(subject.filter(msg -> msg.first().equals(index)).observeOn(Schedulers.computation()).subscribe(ignore -> {
-        fibonacci(24);
-        latch.countDown();
-      }));
+      disposable.add(subject
+        .filter(msg -> {
+          // System.out.println("filterObserveOn:Filter -> "+ index + " on "+ Thread.currentThread().getName());
+          return msg.first().equals(index);
+        })
+        // .map(ignore -> {
+        //   System.out.println("filterObserveOn:Map -> "+ index + " on "+ Thread.currentThread().getName());
+        //   fibonacci(24);
+        //   return ignore;
+        // })
+        .observeOn(Schedulers.computation())
+        .subscribe(ignore -> {
+          // System.out.println("filterObserveOn:Subscribe -> "+ index + " on "+ Thread.currentThread().getName());
+          fibonacci(24);
+          latch.countDown();
+        }));
     }
 
     for (int i = 0; i < NUM_ITERATIONS; i++) {
+      // System.out.println("filterSubject:Publish "+ i +" on "+ Thread.currentThread().getName());
       subject.onNext(Pair.create(i, i));
     }
 
