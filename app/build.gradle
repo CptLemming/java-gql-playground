@@ -27,6 +27,7 @@ dependencies {
     implementation 'com.typesafe.akka:akka-persistence-query_2.13:2.6.15'
     implementation 'io.netty:netty-buffer:4.1.60.Final'
     implementation 'ch.qos.logback:logback-classic:1.1.7'
+    implementation 'io.dropwizard.metrics:metrics-core:4.2.0'
 }
 
 application {
