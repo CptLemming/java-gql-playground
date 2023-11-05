@@ -18,7 +18,7 @@ public class ActorApp {
   public static Integer NUM_CHILDREN = 1000;
   public static void main(String[] args) {
     PublishSubject<String> rootSubject = PublishSubject.create();
-    BiFunction<Integer, Subject<String>, Behavior<ChildCommand>> createChild = (index, subject) -> Behaviors.setup(context -> {
+    BiFunction<Integer, Subject<String>, Behavior<ChildCommand>> createChild = (index, subject) -> Behaviors.withTimers(timers -> Behaviors.setup(context -> {
       Observable.interval(ActorApp.TICKER_MS, TimeUnit.MILLISECONDS)
         .subscribe(ticker -> {
           context.getSelf().tell(new SendMessageToChild("PING"));
@@ -30,7 +30,7 @@ public class ActorApp {
           return Behaviors.same();
         })
         .build();
-    });
+    }));
 
     Behavior<ParentCommand> parent = Behaviors.setup(context -> {
 

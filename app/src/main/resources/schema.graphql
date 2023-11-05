@@ -11,8 +11,13 @@ type Fader {
   type: PathType
 }
 
+type PathInput {
+  width: Int
+}
+
 type Subscription {
   fader(faderID: String): Fader
+  pathInput: PathInput
 }
 
 enum PathType {

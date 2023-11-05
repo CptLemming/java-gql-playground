@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import graphql.ExecutionResult;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 class AppTest {
     @Test void helloWorld() {
@@ -80,5 +81,22 @@ class AppTest {
         }
 
         System.out.println(">> End");
+    }
+
+    @Test void subscribePathInput() {
+        App app = new App();
+
+        Publisher<ExecutionResult> dataStream = app.subscribe("subscription GET_PATH_INPUT { pathInput { width }}");
+
+        Observable.fromPublisher(dataStream)
+            .subscribeOn(Schedulers.single())
+            .observeOn(Schedulers.single())
+            .unsubscribeOn(Schedulers.single())
+            .blockingSubscribe(executionResult -> {
+                // System.out.println("== DATA");
+                System.out.println((Object) executionResult.getData());
+                // System.out.println("** ERR");
+                // System.err.println(executionResult.getErrors());
+            });
     }
 }

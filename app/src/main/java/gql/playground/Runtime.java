@@ -22,6 +22,7 @@ public class Runtime {
       )
       .type("Subscription", builder -> builder
           .dataFetcher("fader", new SubscribeFaderFetcher())
+          .dataFetcher("pathInput", new SubscribePathInputFetcher())
       )
       .build();
   }
