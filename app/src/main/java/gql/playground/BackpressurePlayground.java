@@ -3,15 +3,20 @@ package gql.playground;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +24,7 @@ public class BackpressurePlayground {
   public static Logger logger = LoggerFactory.getLogger(BackpressurePlayground.class.getSimpleName());
 
   public static void main(String[] args) throws InterruptedException {
+    PublishSubject<String> killswitch = PublishSubject.create();
     CountDownLatch latch = new CountDownLatch(1);
 
     Flowable<Patch> subscription1 = Flowable.create((emitter) -> {
@@ -68,22 +74,41 @@ public class BackpressurePlayground {
       emitter.onComplete();
     }, BackpressureStrategy.BUFFER);
 
+    Flowable<Patch> subscription4 = Flowable.create((emitter) -> {
+      // logger.info("EMIT(dev456) -> "+ Thread.currentThread());
+      emitter.onNext(new Patch("add", "/items", "[]"));
+      emitter.onNext(new Patch("add", "/items/0", "{}"));
+      emitter.onNext(new Patch("add", "/items/1", "{}"));
+      emitter.onNext(new Patch("add", "/items/0/info", "{}"));
+      emitter.onNext(new Patch("add", "/items/1/info", "{}"));
+      emitter.onComplete();
+    }, BackpressureStrategy.BUFFER);
+
     Flowable
       .merge(
         subscription1,
         subscription2,
-        subscription3.delay(1500, TimeUnit.MILLISECONDS)
+        subscription3.delay(1500, TimeUnit.MILLISECONDS),
+        subscription4
       )
       // .doOnNext(item -> {
       //   logger.info("EMIT -> "+ item);
       // })
+
+      .takeUntil(killswitch.toFlowable(BackpressureStrategy.LATEST))
       .map(item -> PatchOperations.wrap(item))
+      .doOnCancel(() -> {
+        logger.info("CANCEL");
+      })
       .onBackpressureReduce((coll, item) -> {
           // logger.info("REDUCE -> "+ coll + " or "+ item);
           return coll.merge(item);
       })
       .observeOn(Schedulers.single(), false, 1)
       .subscribeOn(Schedulers.io())
+      .doOnCancel(() -> {
+        logger.info("CANCEL 2");
+      })
       .subscribe(new Subscriber<>() {
         public static Logger logger = LoggerFactory.getLogger(BackpressurePlayground.class.getSimpleName() + "#Subscriber");
         Subscription s;
@@ -93,6 +118,8 @@ public class BackpressurePlayground {
           this.s = s;
           logger.info("START");
           s.request(1);
+          // s.cancel();
+          // killswitch.onComplete();
         }
 
         @Override
@@ -125,7 +152,7 @@ public class BackpressurePlayground {
 
   record Patch(String op, String path, Object value) {}
   static class PatchOperations {
-    private HashMap<String, Patch> cache = new HashMap<>();
+    private LinkedHashMap<String, Patch> cache = new LinkedHashMap<>();
 
     public PatchOperations() {}
 
@@ -152,10 +179,22 @@ public class BackpressurePlayground {
       return this;
     }
 
+    public List<Patch> getValues() {
+      return cache
+        .values()
+        .stream()
+        .sorted(
+          Comparator.comparingInt(patch -> {
+            return patch.path.length();
+          })
+        )
+        .toList();
+    }
+
     @Override
     public String toString() {
       return "Collection[\n "+ (
-        cache.values()
+        getValues()
         .stream()
         .sorted(Comparator.comparingInt(patch -> patch.path.length()))
         .map(entry -> entry.toString())
